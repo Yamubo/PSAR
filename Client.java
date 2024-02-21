@@ -7,6 +7,7 @@ import java.net.Socket;
 public class Client {
     private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 12345;
+    private static String username;
 
     public static void main(String[] args) {
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
@@ -22,18 +23,24 @@ public class Client {
 
                 switch (choice) {
                     case "1":
-                        createFile(out, in, reader);
+                        login(out, in, reader);
                         break;
                     case "2":
-                        listAndReadFiles(out, in, reader);
+                        register(out, in, reader);
                         break;
                     case "3":
-                        writeFile(out, in, reader);
+                        createFile(out, in, reader);
                         break;
                     case "4":
-                        deleteFile(out, in, reader);
+                        listFiles(out, in, reader);
                         break;
                     case "5":
+                        writeFile(out, in, reader);
+                        break;
+                    case "6":
+                        deleteFile(out, in, reader);
+                        break;
+                    case "7":
                         return;
                     default:
                         System.out.println("Le choix est invalide ! Veuillez réessayer.");
@@ -46,12 +53,43 @@ public class Client {
 
     private static void displayMenu() {
         System.out.println("\nMenu:");
-        System.out.println("1. Créer un fichier");
-        System.out.println("2. Lire les fichiers");
-        System.out.println("3. Écrire dans un fichier");
-        System.out.println("4. Supprimer un fichier");
-        System.out.println("5. Quitter");
+        System.out.println("1. Se connecter");
+        System.out.println("2. S'inscrire");
+        System.out.println("3. Créer un fichier");
+        System.out.println("4. Lire les fichiers");
+        System.out.println("5. Écrire dans un fichier");
+        System.out.println("6. Supprimer un fichier");
+        System.out.println("7. Quitter");
         System.out.print("Entrer votre choix : ");
+    }
+
+    private static void login(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
+        System.out.print("Nom d'utilisateur : ");
+        String username = reader.readLine();
+        System.out.print("Mot de passe : ");
+        String password = reader.readLine();
+        out.println("LOGIN:" + username + ":" + password);
+        String response = in.readLine();
+        if (response.equals("LOGIN_SUCCESS")) {
+            System.out.println("Connexion réussie !");
+            Client.username = username;
+        } else {
+            System.out.println("Échec de la connexion. Veuillez vérifier vos informations.");
+        }
+    }
+
+    private static void register(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
+        System.out.print("Nom d'utilisateur : ");
+        String username = reader.readLine();
+        System.out.print("Mot de passe : ");
+        String password = reader.readLine();
+        out.println("REGISTER:" + username + ":" + password);
+        String response = in.readLine();
+        if (response.equals("REGISTER_SUCCESS")) {
+            System.out.println("Inscription réussie !");
+        } else {
+            System.out.println("Échec de l'inscription. Le nom d'utilisateur est déjà utilisé.");
+        }
     }
 
     private static void createFile(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
@@ -62,23 +100,31 @@ public class Client {
         System.out.println(response);
     }
 
-    private static void listAndReadFiles(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
+    private static void listFiles(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
         out.println("LIST");
-        System.out.println("Liste des fichiers disponibles :");
-
-        String line;
-        while (!(line = in.readLine()).equals("END")) {
-            System.out.println(line);
+        String line = in.readLine();
+        if (line.equals("NO_FILES")) {
+            System.out.println("Aucun fichier disponible.");
+            return;
         }
 
-        System.out.print("Entrer le nom du fichier à lire : ");
-        String fileName = reader.readLine();
-        out.println("READ:" + fileName);
+        System.out.println("Liste des fichiers disponibles :");
 
-        System.out.println("Contenu du fichier " + fileName + ":");
-
-        while (!(line = in.readLine()).equals("END")) {
+        while (!line.equals("END")) {
             System.out.println(line);
+            line = in.readLine();
+        }
+
+        System.out.print("Entrer le nom du fichier à lire (ou appuyez sur Entrée pour revenir au menu) : ");
+        String fileName = reader.readLine();
+
+        if (!fileName.isEmpty()) {
+            out.println("READ:" + fileName);
+            line = in.readLine();
+            while (!line.equals("END")) {
+                System.out.println(line);
+                line = in.readLine();
+            }
         }
     }
 
