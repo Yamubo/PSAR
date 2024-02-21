@@ -4,7 +4,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
@@ -12,8 +14,7 @@ public class Server {
     private static Map<String, List<String>> files = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
-        try {
-            ServerSocket serverSocket = new ServerSocket(PORT);
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Serveur démarré sur le port " + PORT);
 
             while (true) {
@@ -34,6 +35,17 @@ public class Server {
             this.clientSocket = socket;
         }
 
+        private synchronized void listFiles() {
+            if (!files.isEmpty()) {
+                for (String fileName : files.keySet()) {
+                    out.println(fileName);
+                }
+            } else {
+                out.println("Aucun fichier disponible.");
+            }
+            out.println("END");
+        }
+
         @Override
         public void run() {
             try {
@@ -41,71 +53,46 @@ public class Server {
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
                 String inputLine;
+
                 while ((inputLine = in.readLine()) != null) {
                     String[] tokens = inputLine.split(":");
-                    String action = null;
-                    String fileName = null;
-                    String content = null;
-
-                    if (tokens.length >= 2) {
-                        action = tokens[0];
-                        fileName = tokens[1];
-
-                        if (tokens.length >= 3) {
-                            content = tokens[2];
-                        }
-
-                    } else {
-                        System.out.println("Format de demande non valide. Veuillez fournir une action et un nom de fichier séparés par ':' !");
-                        continue;
-                    }
+                    String action = tokens[0];
 
                     switch (action) {
                         case "CREATE":
-                            if (content != null) {
-                                createFile(fileName, content); // Appel à la méthode pour créer un fichier avec le contenu
-                            } else {
-                                out.println("Missing content to write. Please provide content after file name.");
-                            }
-
+                            createFile(tokens[1]);
+                            break;
+                        case "LIST":
+                            listFiles();
                             break;
                         case "READ":
-                            sendFile(fileName);
+                            sendFile(tokens[1]);
                             break;
                         case "WRITE":
-                            if (tokens.length >= 3) {
-                                writeFile(fileName, tokens[2]);
-                            } else {
-                                out.println("Il manque du contenu à écrire. Veuillez fournir le contenu après le nom du fichier.");
-                            }
-
+                            writeFile(tokens[1], tokens[2]);
                             break;
                         case "DELETE":
-                            deleteFile(fileName);
-
+                            deleteFile(tokens[1]);
                             break;
                         default:
-                            out.println("Action non valide. Les actions prises en charge sont CREATE, READ, WRITE et DELETE.");
+                            out.println("Action invalide");
                     }
                 }
-
-                in.close();
-                out.close();
-                clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
-        private synchronized void createFile(String fileName, String content) {
-            if (content.isEmpty()) {
-                out.println("Le contenu du fichier est vide. Veuillez fournir du contenu à écrire.");
-                return;
-            }
-
+        private synchronized void createFile(String fileName) {
             if (!files.containsKey(fileName)) {
-                files.put(fileName, Arrays.asList(content.split("\n")));
-                out.println("Fichier créé avec succès !");
+                files.put(fileName, new ArrayList<>());
+                out.println("Le fichier est crée avec succès.");
             } else {
                 out.println("Le fichier existe déjà !");
             }
@@ -113,17 +100,26 @@ public class Server {
 
         private synchronized void sendFile(String fileName) {
             List<String> fileContent = files.getOrDefault(fileName, new ArrayList<>());
-            out.println(String.join("\n", fileContent));
+            for (String line : fileContent) {
+                out.println(line);
+            }
+            out.println("END");
         }
 
         private synchronized void writeFile(String fileName, String content) {
-            files.put(fileName, Arrays.asList(content.split("\n")));
-            out.println("Fichier écrit avec succès !");
+            List<String> fileContent = files.getOrDefault(fileName, new ArrayList<>());
+            fileContent.add(content);
+            files.put(fileName, fileContent);
+            out.println("Le fichier est mis à jour avec succès !");
         }
 
         private synchronized void deleteFile(String fileName) {
-            files.remove(fileName);
-            out.println("Fichier supprimé avec succès !");
+            if (files.containsKey(fileName)) {
+                files.remove(fileName);
+                out.println("Le fichier est supprimé avec succès.");
+            } else {
+                out.println("Le fichier n'existe pas !");
+            }
         }
     }
 }
