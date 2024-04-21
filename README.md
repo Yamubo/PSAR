@@ -26,3 +26,7 @@
 
 **Mentions :**
 - On gère qu'un seul fichier
+
+> # Infos à savoir !!
+
+- **Rapport final avant jeudi 16 mai** !<br>
