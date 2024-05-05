@@ -136,13 +136,24 @@ public class Serveur {
             }
         }
 
+        private void updateLine(String fileName, int lineId, String newContent) {
+            List<String> fileContent = files.get(fileName);
+            fileContent.set(lineId - 1, newContent);
+        }
+
         private void writeFile(String fileName, String content) {
             if (!files.containsKey(fileName)) {
                 out.println("Fichier inexistant.");
             } else if (!checkAccess(fileName)) {
                 out.println("Accès refusé.");
             } else {
-                files.get(fileName).add(content);
+                List<String> fileContent = files.get(fileName);
+                int lineId = fileContent.size() + 1; // Nouvel ID de ligne
+                fileContent.add(content);
+
+                // Utilisation de la politique de cohérence avec mise à jour
+                updateLine(fileName, lineId, content);
+
                 System.out.println("Contenu ajouté au fichier '" + fileName + "' : " + content);
                 out.println("Le fichier est mis à jour avec succès !");
             }

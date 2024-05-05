@@ -60,7 +60,10 @@ public class Client {
     private static void createFile(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
         System.out.print("Entrer le nom du fichier : ");
         String fileName = reader.readLine();
-        out.println("CREATE:" + fileName);
+
+        String coherencePolicy = "UPDATE";
+
+        out.println("CREATE:" + fileName + ":" + coherencePolicy);
         String response = in.readLine();
         System.out.println(response);
     }
@@ -105,8 +108,10 @@ public class Client {
     private static void writeFile(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
         System.out.print("Entrer le nom du fichier : ");
         String fileName = reader.readLine();
+
         System.out.print("Saisir le texte à écrire : ");
         String content = reader.readLine();
+
         out.println("WRITE:" + fileName + ":" + content);
         String response = in.readLine();
         System.out.println(response);

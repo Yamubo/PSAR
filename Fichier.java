@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 //rendre la création,mo
-/*public class Fichier {
+public class Fichier {
     private static int id = 0;
     private List<Ligne> ensemble;
     private Map<String, Integer> locks;
@@ -33,13 +33,18 @@ import java.util.Map;
             this.contenu = str;
         }
 
-        public boolean locking(){
-            this.lock = true;
-            return lock;
+        public boolean locking(String user){
+            if (!this.lock) {
+                this.lock = true;
+                locks.put(user, id);
+                return true;
+            }
+            return false;
         }
 
         public void unlocking(){
             this.lock = false;
+            locks.remove(id);
         }
 
         public boolean isLock(){
@@ -57,9 +62,13 @@ import java.util.Map;
 
     //modifie la ligne avec un id précis
     //retourne l'etat de réussite de la modification
-    public boolean modifierLigne(int id , String contenu ){
+    public boolean modifierLigne(int id , String contenu, String user){
         for (Ligne li : ensemble) {
             if (li.getId() == id) {
+                if (li.isLock() && !locks.get(id).equals(user)) {
+                    return false;
+                }
+
                 li.modifierLigne(contenu);
                 return true;
             }
@@ -70,8 +79,8 @@ import java.util.Map;
 
     //ajoute un lock à la ligne
     //ajoute un lock
-    public boolean addLock(int id,String user){
-        if (locks.containsKey(id)) {
+    public boolean addLock(int id, String user){
+        /*if (locks.containsKey(id)) {
             return true;
         }
 
@@ -85,13 +94,20 @@ import java.util.Map;
                     return true;
                 }
             }
+        }*/
+
+        for (Ligne li : ensemble) {
+            if (li.getId() == id) {
+                return li.locking(user);
+            }
         }
+
         return false;
     }
 
     //unlock la ligne et retire le locks
     public void unlock(int id){
-        if (! locks.containsKey(id)) {
+        /*if (! locks.containsKey(id)) {
             return;
         }
 
@@ -100,13 +116,19 @@ import java.util.Map;
                 li.unlocking();
                 locks.remove(id);
             }
+        }*/
+
+        for (Ligne li : ensemble) {
+            if (li.getId() == id) {
+                li.unlocking();
+            }
         }
     }
 
     //insere un ligne après la ligne passée en id
     //retourne l'id de la nouvelle ligne créée
-    public int ajouterLigne(int id, String li, boolean deb ){
-        int newId = ++id; // Incrémentation du compteur pour générer un nouvel ID
+    public int ajouterLigne(int id, String contenu, boolean deb){
+        int newId = ++Fichier.id; // Incrémentation du compteur pour générer un nouvel ID
 
         if (deb) {
             ensemble.add(0, new Ligne(newId, contenu)); // Ajout au début de la liste
@@ -116,4 +138,14 @@ import java.util.Map;
 
         return newId;
     }
-}*/
+
+    public List<String> getContent() {
+        List<String> content = new ArrayList<>();
+
+        for (Ligne li : ensemble) {
+            content.add(li.getContenu());
+        }
+
+        return content;
+    }
+}
