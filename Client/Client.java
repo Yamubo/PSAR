@@ -1,3 +1,5 @@
+package Client;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -23,24 +25,18 @@ public class Client {
 
                 switch (choice) {
                     case "1":
-                        login(out, in, reader);
-                        break;
-                    case "2":
-                        register(out, in, reader);
-                        break;
-                    case "3":
                         createFile(out, in, reader);
                         break;
-                    case "4":
+                    case "2":
                         listFiles(out, in, reader);
                         break;
-                    case "5":
+                    case "3":
                         writeFile(out, in, reader);
                         break;
-                    case "6":
+                    case "4":
                         deleteFile(out, in, reader);
                         break;
-                    case "7":
+                    case "5":
                         return;
                     default:
                         System.out.println("Le choix est invalide ! Veuillez réessayer.");
@@ -53,43 +49,12 @@ public class Client {
 
     private static void displayMenu() {
         System.out.println("\nMenu:");
-        System.out.println("1. Se connecter");
-        System.out.println("2. S'inscrire");
-        System.out.println("3. Créer un fichier");
-        System.out.println("4. Lire les fichiers");
-        System.out.println("5. Écrire dans un fichier");
-        System.out.println("6. Supprimer un fichier");
-        System.out.println("7. Quitter");
+        System.out.println("1. Créer un fichier");
+        System.out.println("2. Lister les fichiers");
+        System.out.println("3. Écrire dans un fichier");
+        System.out.println("4. Supprimer un fichier");
+        System.out.println("5. Quitter");
         System.out.print("Entrer votre choix : ");
-    }
-
-    private static void login(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
-        System.out.print("Nom d'utilisateur : ");
-        String username = reader.readLine();
-        System.out.print("Mot de passe : ");
-        String password = reader.readLine();
-        out.println("LOGIN:" + username + ":" + password);
-        String response = in.readLine();
-        if (response.equals("LOGIN_SUCCESS")) {
-            System.out.println("Connexion réussie !");
-            Client.username = username;
-        } else {
-            System.out.println("Échec de la connexion. Veuillez vérifier vos informations.");
-        }
-    }
-
-    private static void register(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
-        System.out.print("Nom d'utilisateur : ");
-        String username = reader.readLine();
-        System.out.print("Mot de passe : ");
-        String password = reader.readLine();
-        out.println("REGISTER:" + username + ":" + password);
-        String response = in.readLine();
-        if (response.equals("REGISTER_SUCCESS")) {
-            System.out.println("Inscription réussie !");
-        } else {
-            System.out.println("Échec de l'inscription. Le nom d'utilisateur est déjà utilisé.");
-        }
     }
 
     private static void createFile(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
@@ -105,6 +70,7 @@ public class Client {
         String line = in.readLine();
         if (line.equals("NO_FILES")) {
             System.out.println("Aucun fichier disponible.");
+
             return;
         }
 
@@ -115,18 +81,26 @@ public class Client {
             line = in.readLine();
         }
 
-        System.out.print("Entrer le nom du fichier à lire (ou appuyez sur Entrée pour revenir au menu) : ");
-        String fileName = reader.readLine();
+        // Vérifier si aucun fichier n'est disponible
+        if (!line.equals("END")) {
+            // S'il y a des fichiers disponibles, demander le nom du fichier à lire
+            System.out.print("Entrer le nom du fichier à lire (ou appuyez sur Entrée pour revenir au menu) : ");
+            String fileName = reader.readLine();
 
-        if (!fileName.isEmpty()) {
-            out.println("READ:" + fileName);
-            line = in.readLine();
-            while (!line.equals("END")) {
-                System.out.println(line);
+            if (!fileName.isEmpty()) {
+                out.println("READ:" + fileName);
                 line = in.readLine();
+                while (!line.equals("END")) {
+                    System.out.println(line);
+                    line = in.readLine();
+                }
+            } else {
+                // Retourner au menu principal si aucun nom de fichier n'est entré
+                displayMenu(); // Afficher à nouveau le menu
             }
         }
     }
+
 
     private static void writeFile(PrintWriter out, BufferedReader in, BufferedReader reader) throws IOException {
         System.out.print("Entrer le nom du fichier : ");

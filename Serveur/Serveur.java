@@ -1,3 +1,5 @@
+package Serveur;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,10 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Server {
+public class Serveur {
     private static final int PORT = 12345;
     private static Map<String, List<String>> files = new HashMap<>();
     private static Map<String, String> users = new HashMap<>();
+    private static int connectedUsers = 0;
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -20,6 +23,9 @@ public class Server {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                connectedUsers++;
+                System.out.println("Nouvelle connexion : " + clientSocket.getInetAddress());
+
                 new Thread(new ClientHandler(clientSocket)).start();
             }
         } catch (IOException e) {
@@ -50,11 +56,8 @@ public class Server {
                     String action = tokens[0];
 
                     switch (action) {
-                        case "LOGIN":
-                            login(tokens[1], tokens[2]);
-                            break;
-                        case "REGISTER":
-                            register(tokens[1], tokens[2]);
+                        case "CREATE":
+                            createFile(tokens[1]);
                             break;
                         case "LIST":
                             listFiles();
@@ -72,9 +75,6 @@ public class Server {
                         case "DELETE":
                             deleteFile(tokens[1]);
                             break;
-                        case "CREATE":
-                            createFile(tokens[1]);
-                            break;
                         default:
                             out.println("Action invalide");
                     }
@@ -84,33 +84,17 @@ public class Server {
             } finally {
                 try {
                     clientSocket.close();
+                    connectedUsers--;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        private void login(String username, String password) {
-            if (users.containsKey(username) && users.get(username).equals(password)) {
-                this.username = username;
-                out.println("LOGIN_SUCCESS");
-            } else {
-                out.println("LOGIN_FAILED");
-            }
-        }
-
-        private void register(String username, String password) {
-            if (!users.containsKey(username)) {
-                users.put(username, password);
-                out.println("REGISTER_SUCCESS");
-            } else {
-                out.println("REGISTER_FAILED");
-            }
-        }
-
         private void createFile(String fileName) {
             if (!files.containsKey(fileName)) {
                 files.put(fileName, new ArrayList<>());
+                System.out.println("Nouveau fichier créé : " + fileName);
                 out.println("Le fichier est créé avec succès.");
             } else {
                 out.println("Le fichier existe déjà !");
@@ -129,18 +113,26 @@ public class Server {
         }
 
         private void readFile(String fileName) {
+            System.out.println("Lecture du fichier : " + fileName);
+
             if (!files.containsKey(fileName)) {
+                System.out.println("Fichier inexistant : " + fileName);
                 out.println("Fichier inexistant.");
                 out.println("END");
             } else if (!checkAccess(fileName)) {
+                System.out.println("Accès refusé au fichier : " + fileName);
                 out.println("Accès refusé.");
                 out.println("END");
             } else {
+                System.out.println("Lecture du contenu du fichier : " + fileName);
                 List<String> fileContent = files.get(fileName);
+
                 for (String line : fileContent) {
                     out.println(line);
                 }
+
                 out.println("END");
+                System.out.println("Fin de la lecture du fichier : " + fileName);
             }
         }
 
@@ -151,6 +143,7 @@ public class Server {
                 out.println("Accès refusé.");
             } else {
                 files.get(fileName).add(content);
+                System.out.println("Contenu ajouté au fichier '" + fileName + "' : " + content);
                 out.println("Le fichier est mis à jour avec succès !");
             }
         }
@@ -162,6 +155,7 @@ public class Server {
                 out.println("Accès refusé.");
             } else {
                 files.remove(fileName);
+                System.out.println("Fichier supprimé : " + fileName);
                 out.println("Le fichier est supprimé avec succès.");
             }
         }

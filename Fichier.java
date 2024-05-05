@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 //rendre la création,mo
-public class Fichier {
+/*public class Fichier {
     private static int id = 0;
     private List<Ligne> ensemble;
     private Map<String, Integer> locks;
@@ -116,4 +116,4 @@ public class Fichier {
 
         return newId;
     }
-}
+}*/
