@@ -2,41 +2,33 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.*;
 
 //rendre la création,mo
 public class Fichier {
-    private static int id = 0;
-    private List<Ligne> ensemble;
-    private Map<String, Integer> locks;
-
-    public Fichier() {
-        this.ensemble = new ArrayList<>();
-        this.locks = new HashMap<>();
-    }
-
+    
     private class Ligne{
         private boolean lock = false;
-        private int id;
+        private int idl;
         private String contenu = null;
 
-
         public Ligne(int id){
-            this.id = id;
+            this.idl = id;
         }
 
         public Ligne(int id , String str){
-            this.id = id;
+            this.idl = id;
             this.contenu = str;
         }
 
-        public void modifierLigne(String str){
+        public void modifier(String str){
             this.contenu = str;
         }
 
         public boolean locking(String user){
             if (!this.lock) {
                 this.lock = true;
-                locks.put(user, id);
+                locks.put( idl, user);
                 return true;
             }
             return false;
@@ -44,7 +36,7 @@ public class Fichier {
 
         public void unlocking(){
             this.lock = false;
-            locks.remove(id);
+            locks.remove(this.idl);
         }
 
         public boolean isLock(){
@@ -52,7 +44,7 @@ public class Fichier {
         }
 
         public int getId(){
-            return this.id;
+            return this.idl;
         }
 
         public String getContenu(){
@@ -60,16 +52,33 @@ public class Fichier {
         }
     }
 
+    private static int id = 0;
+    private List<Ligne> ensemble;
+    private Map<Integer , String> locks;
+
+    public Fichier() {
+        this.ensemble = new ArrayList<>();
+        this.locks = new HashMap<>();
+    }
+
+
     //modifie la ligne avec un id précis
     //retourne l'etat de réussite de la modification
     public boolean modifierLigne(int id , String contenu, String user){
-        for (Ligne li : ensemble) {
+        for (Ligne li : this.ensemble) {
             if (li.getId() == id) {
-                if (li.isLock() && !locks.get(id).equals(user)) {
+
+                boolean lo = true;
+                String tmp = locks.get(id);
+                if(tmp != null && ! tmp.equals(user)){
+                    lo = false;
+                }
+
+                if (li.isLock() && ! lo) {
                     return false;
                 }
 
-                li.modifierLigne(contenu);
+                li.modifier(contenu);
                 return true;
             }
         }
@@ -78,24 +87,7 @@ public class Fichier {
     }
 
     //ajoute un lock à la ligne
-    //ajoute un lock
     public boolean addLock(int id, String user){
-        /*if (locks.containsKey(id)) {
-            return true;
-        }
-
-        for (Ligne li : ensemble) {
-            if (li.getId()==id) {
-                if (li.isLock()) {
-                    return true;
-                } else {
-                    li.locking();
-                    locks.add(id,user);
-                    return true;
-                }
-            }
-        }*/
-
         for (Ligne li : ensemble) {
             if (li.getId() == id) {
                 return li.locking(user);
@@ -105,38 +97,53 @@ public class Fichier {
         return false;
     }
 
-    //unlock la ligne et retire le locks
-    public void unlock(int id){
-        /*if (! locks.containsKey(id)) {
-            return;
-        }
-
-        for (Ligne li : ensemble) {
-            if(li.getId()==id){
-                li.unlocking();
-                locks.remove(id);
-            }
-        }*/
+    //unlock la ligne et retire le lock
+    //false si la ligne n'existe pas , True si la ligne à bien été Unlock
+    public boolean unlock(int id , String user){
 
         for (Ligne li : ensemble) {
             if (li.getId() == id) {
                 li.unlocking();
+                return true;
             }
         }
+
+        return false;
+    }
+
+    private int findIndex(int id){
+
+        for(Ligne li : ensemble){
+            if(li.getId() == id){
+                return ensemble.indexOf(li);
+            }
+        }
+
+        return -1;
     }
 
     //insere un ligne après la ligne passée en id
     //retourne l'id de la nouvelle ligne créée
-    public int ajouterLigne(int id, String contenu, boolean deb){
-        int newId = ++Fichier.id; // Incrémentation du compteur pour générer un nouvel ID
+    public int ajouterLigne(int id, String contenu){
+        int newId = ++this.id; // Incrémentation du compteur pour générer un nouvel ID
 
-        if (deb) {
+        if (id == -1 || ensemble.isEmpty()) {
             ensemble.add(0, new Ligne(newId, contenu)); // Ajout au début de la liste
-        } else {
+            return newId;
+        } 
+        
+        int index = this.findIndex(id);
+        if( index == -1){
             ensemble.add(new Ligne(newId, contenu)); // Ajout à la fin de la liste
+        }else {
+            ensemble.add(index,new Ligne(newId, contenu)); // Ajout à la fin de la liste
         }
 
         return newId;
+    }
+
+    public int maxNumber(){
+        return this.id;
     }
 
     public List<String> getContent() {
@@ -148,4 +155,38 @@ public class Fichier {
 
         return content;
     }
+    /* 
+    public static void main(String[] args){
+
+        Fichier f = new Fichier();
+        
+        f.ajouterLigne(f.maxNumber(),"Lets go");
+        f.ajouterLigne(0,"party ! ");
+
+        List<String> content = f.getContent();
+        for( String li : content){
+            System.out.println(li);
+        }
+        
+        f.addLock(1,"visir");
+        f.modifierLigne(1,"ok","terie");
+        f.unlock(1,"visir");
+
+        System.out.println("===========");
+        content = f.getContent();
+        for( String li : content){
+            System.out.println(li);
+        }
+
+        f.modifierLigne(1,"ok","visir");
+
+        System.out.println("===========");
+        content = f.getContent();
+        for( String li : content){
+            System.out.println(li);
+        }
+
+    
+    } */
 }
+
