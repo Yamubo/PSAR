@@ -11,11 +11,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import Fichier.FichierServeur;
+
 public class Serveur {
     private static final int PORT = 12345;
     private static Map<String, List<String>> files = new HashMap<>();
     private static Map<String, String> users = new HashMap<>();
     private static int connectedUsers = 0;
+    private static FichierServeur fs = new FichierServeur();
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {

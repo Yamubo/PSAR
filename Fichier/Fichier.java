@@ -26,17 +26,21 @@ public class Fichier {
             ids.add(li.getId());
         }
 
-        return (Integer [])ids.toArray();
+        if(ids.size() == 0) return null;
+
+        return ids.toArray(new Integer[0]);
     }
 
     public String [] getContent() {
-        List<String> content = new ArrayList<>();
+        ArrayList<String> content = new ArrayList<>();
 
         for (Ligne li : ensemble) {
             content.add(li.getContenu());
         }
 
-        return (String [])content.toArray();
+        if(content.size() == 0) return null;
+
+        return content.toArray(new String[0]);
     }
 
     public void print(int idl){

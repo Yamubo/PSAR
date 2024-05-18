@@ -143,7 +143,7 @@ public class Client {
             boolean b = true;
             while( b ){
                 String tmp = console.readLine("voulez vous vraiment supprimer la ligne : YES / NO \n");
-                switch (tmp) {
+                switch (tmp.toUpperCase()) {
                     case "YES":
                         b = false;
                         break;
@@ -250,7 +250,7 @@ public class Client {
         boolean fin = true;
         while (fin) {
             String ligne = console.readLine("Quel est votre requête ? \n");
-            String [] req = ligne.split(" "); 
+            String [] req = ligne.toLowerCase().split(" "); 
             if(req.length >= 1 ){
                 switch (req[0]) {
                     case "mod":
@@ -277,7 +277,6 @@ public class Client {
                         lp.printAll();
                         break; 
                     case "print":
-
                         if(req.length < 2) {
                             System.out.println("mauvais nombre d'arguments \n");
                             break;
