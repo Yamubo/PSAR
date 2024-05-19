@@ -101,6 +101,11 @@ public class Fichier {
         return findIndex(idLigne) > -1;
     }
 
+    public String getSpecContent(int idl){
+        int index = findIndex(idl);
+        if(index == -1)return null;
+        return ensemble.get(index).getContenu();
+    }
     /* 
     public static void main(String[] args){
 

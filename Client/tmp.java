@@ -15,7 +15,7 @@ public class tmp {
     private static final int SERVER_PORT = 12345;
     private static String username;
     private static List<String> syncwait = new ArrayList<String>();
-    private static List<String> commandes = new ArrayList<String>();
+    private static String commandes = null;
     private static FichierClient lp  = new FichierClient();
 
 
@@ -48,21 +48,23 @@ public class tmp {
                     switch (req[0]) {
                         case "mod":
                             if(req.length > 1)
-                                mod(lp, req[1], console);
+                                mod(lp, req[1], console,out);
                             else 
                                 System.out.println("mauvais nombre d'arguments \n");
                             break;
                         case "suppr":
                             if(req.length > 1)
-                                suppr(lp, req[1], console);
+                                suppr(lp, req[1], console,out);
                             else 
                                 System.out.println("mauvais nombre d'arguments \n");
                             break;
 
                         case "add":
-                            if(req.length > 1)
+                            if(req.length == 2)
                                 add(lp, req[1], console,out);
-                            else 
+                            else if (req.length == 1){
+                                add(lp, null, console,out);
+                            }else 
                                 System.out.println("mauvais nombre d'arguments \n");
                             break; 
                         case "printall":
@@ -87,6 +89,7 @@ public class tmp {
                         case "exit":
                             System.out.println("Exit \n");
                             fin=false;
+                            
                             break;  
                         case "help":
                             System.out.println("Help \n");
@@ -151,7 +154,7 @@ public class tmp {
                             sync = false ;
                             break;
                         default:
-                            commandes.add(tmp);
+                            commandes = tmp;
                             break;
                     }
                 }
@@ -187,7 +190,7 @@ public class tmp {
         }
     }
 
-    private static void suppr(FichierClient lp , String id , Console console){
+    private static void suppr(FichierClient lp , String id , Console console,PrintWriter out){
         System.out.println("Suppression de Ligne \n");
         try{
             int idligne ;
@@ -214,10 +217,23 @@ public class tmp {
                 }
             }
 
-            //envoyer req de demande de suppression au serveur
-            //si refus : System.out.println("erreur est survenue \n"); return ; 
-            //si accepte : 
-            lp.supprimerLigne(idligne);
+            System.out.println("Demande de suppression de la ligne: " + idligne); 
+            out.println("SUPP:" + idligne);
+            
+            while(commandes == null){
+                continue;
+            }
+
+            String [] tmp = commandes.split(":");
+            if(tmp[0].equals("REFUS")){
+                System.out.println("REFUS de suppression"); 
+                return;
+            }
+            if(tmp[0].equals("ACCEPT")){
+                System.out.println("Ligne supprimer sur le serveur");
+            }else{
+                System.out.println("Erreur lors de la suppression");
+            }
 
         }catch(NumberFormatException e ){
             System.out.println("Argument n'est pas un nombre \n");
@@ -226,7 +242,7 @@ public class tmp {
                 
     }
 
-    private static void mod(FichierClient lp , String id , Console console){
+    private static void mod(FichierClient lp , String id , Console console,PrintWriter out){
         System.out.println("Modification de Ligne \n");
         try{
             int idligne ;
@@ -239,13 +255,33 @@ public class tmp {
 
             //envoyer req de demande de modif au serveur
             //si refus : System.out.println("erreur est survenue \n"); return ; 
+            System.out.println("Demande de modification de la ligne: " + idligne); 
+            out.println("MODASK:" + idligne);
+            
+            while(commandes == null){
+                continue;
+            }
 
+            String [] tmp = commandes.split(":");
+            if(tmp[0].equals("REFUS")){
+                System.out.println("REFUS de modification"); 
+                return;
+            }
+            if(! tmp[0].equals("ACCEPT")){
+                System.out.println("Erreur lors de la modification");
+                return;
+            }
+            System.out.println("================ ancienne ligne ================");
+            if(tmp.length > 1 ){
+                System.out.println(tmp[1]);
+            }
             //si accepte : 
-            String tmp = console.readLine("entrer contenu de la ligne \n");
+            String tmq = console.readLine("entrer contenu de la ligne \n");
 
+            out.println("MOD:" + idligne + ":"+tmq);
             //envoyer nouvelle idligne + tmp au serveur 
 
-            lp.modifierLigne(idligne, tmp);
+            System.out.println("Nouvelle ligne envoyée \n");
 
         }catch(NumberFormatException e ){
             System.out.println("Argument n'est pas un nombre \n");
@@ -258,13 +294,15 @@ public class tmp {
     private static void add(FichierClient lp , String id , Console console ,PrintWriter out ){
         System.out.println("Insertion/Creation de ligne \n");
         try{
+            
+
+            int idprec = -1;
+            if(id != null)
+                idprec = Integer.parseInt(id);
+
             String tmp = console.readLine("entrer contenu de la ligne \n");
 
-            int idprec = 0;
-            idprec = Integer.parseInt(id);
-
-            out.println("ADD:"+ id + ":" + tmp);
-            aSupprimer++;
+            out.println("ADD:"+ idprec + ":" + tmp);
 
         }catch(NumberFormatException e ){
             System.out.println("Argument n'est pas un nombre \n");

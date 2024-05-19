@@ -49,6 +49,16 @@ public class FichierServeur extends Fichier {
         return false;
     }
 
+    public boolean isUnlock_and_exist(int idligne , String user){
+        if(! isIn(idligne)) return false;
+        String tmp = locks.get(idligne);
+        if(tmp != null && ! tmp.equals(user) ){
+            return false ;
+        }
+        
+        return true;
+    }
+
 
     //unlock la ligne et retire le lock
     //false si la ligne n'existe pas , True si la ligne à bien été Unlock
@@ -68,7 +78,9 @@ public class FichierServeur extends Fichier {
     //insere un ligne après la ligne passée en id
     //retourne l'id de la nouvelle ligne créée
     public int ajouterLigne(int idprec, String contenu){
+        @SuppressWarnings("static-access")
         int newId = ++this.id; // Incrémentation du compteur pour générer un nouvel ID
+        
 
         if (idprec == -1 || this.ensemble.isEmpty()) {
             this.ensemble.add(0, new Ligne(newId, contenu)); // Ajout au début de la liste
@@ -98,10 +110,11 @@ public class FichierServeur extends Fichier {
                 return false;
             }
 
-            if(ensemble.get(index).isLock() ){
-                return false;
-            } else {
+            //if(ensemble.get(index).isLock() ){
+            //    return false; }
+            else {
                 this.ensemble.remove(index);
+                this.locks.remove(id);
                 return true;
             }
         }
