@@ -15,8 +15,7 @@ import Fichier.FichierServeur;
 
 public class Serveur {
     private static final int PORT = 12345;
-    private static Map<String, List<String>> files = new HashMap<>();
-    private static Map<String, String> users = new HashMap<>();
+    private static Map<String, PrintWriter> users = new HashMap<>();
     private static int connectedUsers = 0;
     private static FichierServeur fs = new FichierServeur();
 
@@ -58,28 +57,27 @@ public class Serveur {
                     String[] tokens = inputLine.split(":");
                     String action = tokens[0];
 
-                    switch (action) {
-                        case "CREATE":
-                            createFile(tokens[1]);
+                    System.out.println(action);
+                    switch (action.toUpperCase()) {
+                        case "USER":
+                            username =  addUser(tokens[1],out);
+                            System.out.println(username);
                             break;
-                        case "LIST":
-                            listFiles();
+                        case "ADD" :
+                            add(tokens);
                             break;
-                        case "READ":
-                            if (files.isEmpty()) {
-                                out.println("NO_FILES");
-                            } else {
-                                readFile(tokens[1]);
-                            }
+                        case "SYNC" :
+                            sync(out);
                             break;
-                        case "WRITE":
-                            writeFile(tokens[1], tokens[2]);
+                        case "SUPP" :
+                            suppr(tokens,username,out);
                             break;
-                        case "DELETE":
-                            deleteFile(tokens[1]);
-                            break;
+                        case "MOD" :
+                            mod(tokens,username);
+                        case "MODASK" :
+                            modask(tokens,username,out);
                         default:
-                            out.println("Action invalide");
+                            System.out.println("Action invalide");
                     }
                 }
             } catch (IOException e) {
@@ -87,6 +85,7 @@ public class Serveur {
             } finally {
                 try {
                     clientSocket.close();
+                    users.remove(username);
                     connectedUsers--;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -94,90 +93,119 @@ public class Serveur {
             }
         }
 
-        private void createFile(String fileName) {
-            if (!files.containsKey(fileName)) {
-                files.put(fileName, new ArrayList<>());
-                System.out.println("Nouveau fichier créé : " + fileName);
-                out.println("Le fichier est créé avec succès.");
-            } else {
-                out.println("Le fichier existe déjà !");
+        private static int add(String [] tokens){
+            try{
+                int idprec = Integer.parseInt(tokens[1]);
+                int newid = fs.ajouterLigne(idprec, tokens[2]);
+                sendCreate(idprec , tokens[2] , newid );
+                return newid;
+            }catch(NumberFormatException e ){
+                System.out.println("add error : not int ");
             }
+            return -1;
         }
 
-        private void listFiles() {
-            if (!files.isEmpty()) {
-                for (String fileName : files.keySet()) {
-                    out.println(fileName);
-                }
-            } else {
-                out.println("Aucun fichier disponible.");
-            }
-            out.println("END");
-        }
+        private static void sync(PrintWriter out){
+            String[] contenu = fs.getContent();
+            Integer [] ids = fs.getAllId();
 
-        private void readFile(String fileName) {
-            System.out.println("Lecture du fichier : " + fileName);
-
-            if (!files.containsKey(fileName)) {
-                System.out.println("Fichier inexistant : " + fileName);
-                out.println("Fichier inexistant.");
-                out.println("END");
-            } else if (!checkAccess(fileName)) {
-                System.out.println("Accès refusé au fichier : " + fileName);
-                out.println("Accès refusé.");
-                out.println("END");
-            } else {
-                System.out.println("Lecture du contenu du fichier : " + fileName);
-                List<String> fileContent = files.get(fileName);
-
-                for (String line : fileContent) {
-                    out.println(line);
+            if(contenu != null)
+                for(int i = contenu.length-1 ; i>-1 ; i--){
+                    out.println("SYNC:" + ids[i] + ":" + contenu[i]);
                 }
 
-                out.println("END");
-                System.out.println("Fin de la lecture du fichier : " + fileName);
+            out.println("ENDSYNC:0");
+        }
+
+        private static void suppr(String [] tokens , String username,PrintWriter out){
+            try{
+                if(tokens.length < 2){
+                    System.out.println("Error req SUPP : " + username);
+                    out.println("REFUS:0");
+                    return;
+                }
+                int id = Integer.parseInt(tokens[1]);
+                if(fs.isUnlock_and_exist(id, username)){
+                    fs.addLock(id, username);
+                    fs.supprimerLigne(id, username);
+                    out.println("ACCEPT:0");
+                    sendSuppr(id);
+                }else{
+                    out.println("REFUS:0");
+                    System.out.println("Error req SUPP ligne lock: " + username);
+                }
+
+            }catch(NumberFormatException e){
+                System.out.println("Error req SUPP : " + username);
+                out.println("ERROR:0");
             }
         }
 
-        private void updateLine(String fileName, int lineId, String newContent) {
-            List<String> fileContent = files.get(fileName);
-            fileContent.set(lineId - 1, newContent);
-        }
+        private static void mod(String [] tokens,String username){
+            try{
+                if(tokens.length < 3){
+                    System.out.println("Error req MOD : " + username);
+                    return;
+                }
+                int id = Integer.parseInt(tokens[1]);
+                if(fs.isUnlock_and_exist(id, username)){
+                    fs.modifierLigne(id, tokens[2], username);
+                    sendUpdate(tokens[2], id);
+                    fs.unlock(id, username);
+                }else{
+                    System.out.println("Error req MOD ligne lock: " + username);
+                }
 
-        private void writeFile(String fileName, String content) {
-            if (!files.containsKey(fileName)) {
-                out.println("Fichier inexistant.");
-            } else if (!checkAccess(fileName)) {
-                out.println("Accès refusé.");
-            } else {
-                List<String> fileContent = files.get(fileName);
-                int lineId = fileContent.size() + 1; // Nouvel ID de ligne
-                fileContent.add(content);
-
-                // Utilisation de la politique de cohérence avec mise à jour
-                updateLine(fileName, lineId, content);
-
-                System.out.println("Contenu ajouté au fichier '" + fileName + "' : " + content);
-                out.println("Le fichier est mis à jour avec succès !");
+            }catch(NumberFormatException e){
+                System.out.println("Error req Mod : " + username);
             }
         }
 
-        private void deleteFile(String fileName) {
-            if (!files.containsKey(fileName)) {
-                out.println("Fichier inexistant.");
-            } else if (!checkAccess(fileName)) {
-                out.println("Accès refusé.");
-            } else {
-                files.remove(fileName);
-                System.out.println("Fichier supprimé : " + fileName);
-                out.println("Le fichier est supprimé avec succès.");
+        private static void modask(String [] tokens , String username , PrintWriter out){
+            try{
+                if(tokens.length < 2){
+                    System.out.println("Error req MODASK : " + username);
+                    out.println("REFUS:0");
+                    return;
+                }
+                int id = Integer.parseInt(tokens[1]);
+                if(fs.isUnlock_and_exist(id, username)){
+                    fs.addLock(id, username);
+                    String tmp = fs.getSpecContent(id);
+                    if(tmp == null)
+                        tmp= " ";
+                    out.println("ACCEPT:"+tmp);
+                }else{
+                    out.println("REFUS:0");
+                    System.out.println("Error req MODASK ligne lock: " + username);
+                }
+
+            }catch(NumberFormatException e){
+                System.out.println("Error req MODASK : " + username);
+                out.println("ERROR:0");
             }
         }
 
-        private boolean checkAccess(String fileName) {
-            // Ici, vous pouvez implémenter la logique pour vérifier les autorisations d'accès
-            // pour l'utilisateur actuellement connecté (this.username) par rapport au fichier
-            return true; // Pour le moment, on autorise toujours l'accès
+        private static void sendUpdate(String contenu , int id){
+            users.forEach((u,out) -> {out.println("UPDATE:" + id + ":" +contenu) ; System.out.println("Update send") ;});
         }
+
+        private static void sendCreate(int idprec , String contenu , int id ){
+            users.forEach((u,out) -> {out.println("CREAT:" + idprec + ":" +contenu + ":" + id) ; System.out.println("creat send") ;});
+        }
+
+        private static void sendSuppr(int id){
+            users.forEach((u,out) -> out.println("SUPP:" + id ));
+        }
+
+        private static String addUser(String username,PrintWriter out){
+            String name = username;
+            if(users.containsKey(name)){
+                name = name + connectedUsers;
+            }
+            users.put(name, out);
+            return name;
+        }
+
     }
 }
