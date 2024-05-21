@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,33 +44,31 @@ public class Client {
 
             boolean fin = true;
             while (fin) {
-                //String ligne = console.readLine("Quel est votre requête ? \n");
-
                 System.out.print("Quel est votre requête ? ");
                 String ligne = reader.readLine();
 
                 String [] req = ligne.toLowerCase().split(" ");
-                if(req.length >= 1 ){
+                if (req.length >= 1 ){
                     switch (req[0]) {
                         case "mod":
-                            if(req.length > 1)
+                            if (req.length > 1)
                                 mod(lp, req[1], reader, out);
                             else
                                 System.out.println("mauvais nombre d'arguments \n");
                             break;
                         case "suppr":
-                            if(req.length > 1)
+                            if (req.length > 1)
                                 suppr(lp, req[1], reader, out);
                             else
                                 System.out.println("mauvais nombre d'arguments \n");
                             break;
 
                         case "add":
-                            if(req.length == 2)
+                            if (req.length == 2)
                                 add(lp, req[1], reader, out);
-                            else if (req.length == 1){
+                            else if (req.length == 1) {
                                 add(lp, null, reader, out);
-                            }else
+                            } else
                                 System.out.println("mauvais nombre d'arguments \n");
                             break;
                         case "printall":
@@ -79,15 +76,15 @@ public class Client {
                             lp.printAll();
                             break;
                         case "print":
-                            if(req.length < 2) {
+                            if (req.length < 2) {
                                 System.out.println("mauvais nombre d'arguments \n");
                                 break;
                             }
 
                             int id = 0;
-                            try{
+                            try {
                                 id = Integer.parseInt(req[1]);
-                            }catch(NumberFormatException e ){
+                            } catch (NumberFormatException e ){
                                 System.out.println("Argument n'est pas un nombre \n");
                                 break;
                             }
@@ -113,7 +110,7 @@ public class Client {
 
             tm.stop = true;
 
-            //cette partie permet d'éliminer l'erreur "connection reset du serveur" mais ne termine pas l'exécution du code client
+            //cette partie permet d'éliminer l'erreur "connection reset" du serveur mais ne termine pas l'exécution du code client
             /*reader.close();
             in.close();
             out.close();
@@ -129,33 +126,33 @@ public class Client {
         BufferedReader in ;
         boolean stop = false;
 
-        public Reception(BufferedReader rep){
+        public Reception(BufferedReader rep) {
             this.in = rep;
         }
 
         @Override
-        public void run(){
+        public void run() {
             try{
                 String tmp ;
                 boolean sync = false;
-                while( stop == false){
+                while (stop == false) {
                     tmp = in.readLine();
-                    if(tmp == null )continue;
-                    if(stop) break;
+                    if (tmp == null )continue;
+                    if (stop) break;
                     String [] rep = tmp.split(":");
                     switch (rep[0]) {
                         case "UPDATE":
-                            if(!sync)
+                            if (!sync)
                                 lp.update(Integer.parseInt(rep[1]), rep[2]);
                             else syncwait.add(tmp);
                             break;
                         case "CREAT" :
-                            if(!sync)
+                            if (!sync)
                                 lp.ajouterLigne(Integer.parseInt(rep[1]), rep[2], Integer.parseInt(rep[3]));
                             else syncwait.add(tmp);
                             break;
                         case "SUPP" :
-                            if(!sync)
+                            if (!sync)
                                 lp.supprimerLigne(Integer.parseInt(rep[1]));
                             else syncwait.add(tmp);
                             break;
@@ -182,7 +179,7 @@ public class Client {
 
     }
 
-    private static void apply(){
+    private static void apply() {
         for(String tmp : syncwait){
             String [] rep = tmp.split(":");
             switch (rep[0]) {
@@ -205,18 +202,17 @@ public class Client {
     private static void suppr(FichierClient lp , String id , BufferedReader reader, PrintWriter out) throws IOException {
         System.out.println("Suppression de Ligne \n");
 
-        try{
+        try {
             int idligne ;
             idligne = Integer.parseInt(id);
 
-            if(! lp.isIn(idligne)){
+            if (! lp.isIn(idligne)) {
                 System.out.println("Ligne non existante \n"); 
                 return ; 
             }
 
             boolean b = true;
-            while( b ){
-                //String tmp = console.readLine("voulez vous vraiment supprimer la ligne : YES / NO \n");
+            while( b ) {
                 System.out.print("voulez vous vraiment supprimer la ligne : YES / NO \n");
                 String tmp = reader.readLine();
 
@@ -241,22 +237,22 @@ public class Client {
             System.out.println("Demande de suppression de la ligne: " + idligne);
             out.println("SUPP:" + idligne);
 
-            while(commandes == null){
+            while (commandes == null){
                 continue;
             }
 
             String [] tmp = commandes.split(":");
-            if(tmp[0].equals("REFUS")){
+            if (tmp[0].equals("REFUS")) {
                 System.out.println("REFUS de suppression");
                 return;
             }
-            if(tmp[0].equals("ACCEPT")){
+            if (tmp[0].equals("ACCEPT")) {
                 System.out.println("Ligne supprimer sur le serveur");
-            }else{
+            } else {
                 System.out.println("Erreur lors de la suppression");
             }
 
-        }catch(NumberFormatException e ){
+        } catch (NumberFormatException e) {
             System.out.println("Argument n'est pas un nombre \n");
             return;
         }
@@ -266,11 +262,11 @@ public class Client {
     private static void mod(FichierClient lp , String id , BufferedReader reader, PrintWriter out) throws IOException {
         System.out.println("Modification de Ligne \n");
 
-        try{
+        try {
             int idligne ;
             idligne = Integer.parseInt(id);
 
-            if(! lp.isIn(idligne)){
+            if (! lp.isIn(idligne)) {
                 System.out.println("Ligne non existante \n"); 
                 return ; 
             }
@@ -280,21 +276,21 @@ public class Client {
             System.out.println("Demande de modification de la ligne: " + idligne);
             out.println("MODASK:" + idligne);
 
-            while(commandes == null){
+            while (commandes == null) {
                 continue;
             }
 
             String [] tmp = commandes.split(":");
-            if(tmp[0].equals("REFUS")){
+            if (tmp[0].equals("REFUS")){
                 System.out.println("REFUS de modification");
                 return;
             }
-            if(! tmp[0].equals("ACCEPT")){
+            if (! tmp[0].equals("ACCEPT")){
                 System.out.println("Erreur lors de la modification");
                 return;
             }
             System.out.println("================ ancienne ligne ================");
-            if(tmp.length > 1 ){
+            if (tmp.length > 1 ){
                 System.out.println(tmp[1]);
             }
 
@@ -351,14 +347,14 @@ public class Client {
     private static void listeReq(){
         String [] instruction = new String[7];
         instruction[0] = "mod <id ligne>" ;
-        instruction[1] ="add <id ligne precedente >" ;
-        instruction[2] ="suppr <id ligne>" ;
+        instruction[1] = "add <id ligne precedente >" ;
+        instruction[2] = "suppr <id ligne>" ;
         instruction[3] = "print <id ligne>" ;
-        instruction[4] ="printall" ;
-        instruction[5] ="exit" ;
-        instruction[6] ="help" ;
+        instruction[4] = "printall" ;
+        instruction[5] = "exit" ;
+        instruction[6] = "help" ;
 
-        for(String s : instruction){
+        for (String s : instruction) {
             System.out.println(s);
         }
     }
