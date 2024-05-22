@@ -96,10 +96,6 @@ public class FichierServeur extends Fichier {
         return newId;
     }
 
-    public int maxNumber(){
-        return this.id;
-    }
-
     public synchronized boolean supprimerLigne(int id , String user){
         int index = findIndex(id);
         if(index > -1){

@@ -1,6 +1,6 @@
 # PSAR
 
-> # Debrief du projet au 09/02
+> # Debrief du projet 
 
 # Fonctionnalités voulues :
 - Ajouter + insérer une ligne
@@ -16,17 +16,24 @@
 5. Choix d'un protocole pertinent
 6. Communications entre "serveurs" et "users"
 
-# Solutions possibles :
-1. Utilisation de flags
+# Solutions :
+1. Utilisation de flags et lock
 2. Ajouter un id unique pour une ligne
-
-4. Base : liste chaînée ?
-
+3. Envoyer l'update à chaque client connecté pour toutes les modifications du fichier 
+4. Liste chaînée de Ligne: (identifiant + chaine de caractère)
+5. utilisation du protocol update
 6. Via socket de communication
 
-**Mentions :**
-- On gère qu'un seul fichier
-
-> # Infos à savoir !!
-
-- **Rapport final avant jeudi 16 mai** !<br>
+# Lancement en local
+1. compilation
+    ```
+        make
+    ```
+2. Client: 
+    ```
+        java Client.Client
+    ```
+3. Serveur:
+    ```
+        java Serveur.Serveur
+    ```
