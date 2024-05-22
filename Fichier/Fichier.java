@@ -75,11 +75,11 @@ public class Fichier {
             return ;
         }
 
-        int index = this.findIndex(idprec);
-        if( index == -1){
+        int index = this.findIndex(idprec) ;
+        if( index == -1 || (index+1) >= ensemble.size()){
             this.ensemble.add(new Ligne(newId, contenu)); // Ajout à la fin de la liste
         }else {
-            this.ensemble.add(index,new Ligne(newId, contenu)); // Ajout à la fin de la liste
+            this.ensemble.add(index+1,new Ligne(newId, contenu)); 
         }
 
     }

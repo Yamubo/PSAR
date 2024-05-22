@@ -16,7 +16,6 @@ public class Client {
     private static List<String> syncwait = new ArrayList<String>();
     private static String commandes = null;
     private static FichierClient lp  = new FichierClient();
-    //private static int aSupprimer = 0;
 
     public static void main(String[] args) {
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
@@ -178,7 +177,9 @@ public class Client {
         }
 
     }
-
+    /*
+     * permet d'appliquer toutes les requêtes presentes dans syncwait
+     */
     private static void apply() {
         for(String tmp : syncwait){
             String [] rep = tmp.split(":");
@@ -231,8 +232,7 @@ public class Client {
 
             //envoyer req de demande de suppression au serveur
             //si refus : System.out.println("erreur est survenue \n"); return ; 
-            //si accepte : 
-            //lp.supprimerLigne(idligne);
+            //si accepte : ligne modifier
 
             System.out.println("Demande de suppression de la ligne: " + idligne);
             out.println("SUPP:" + idligne);
@@ -299,9 +299,7 @@ public class Client {
             String tmq = reader.readLine();
 
             out.println("MOD:" + idligne + ":" + tmq);
-            //envoyer nouvelle idligne + tmp au serveur 
-
-            //lp.modifierLigne(idligne, tmp);
+            //envoyer nouvelle idligne + tmq au serveur 
 
             System.out.println("Nouvelle ligne envoyée \n");
 
@@ -313,22 +311,8 @@ public class Client {
 
     private static void add(FichierClient lp , String id , BufferedReader reader, PrintWriter out) throws IOException {
         System.out.println("Insertion/Creation de ligne \n");
-
+        int idprec = -2 ;
         try {
-            /*String tmp = console.readLine("entrer contenu de la ligne \n");
-
-            int idprec = 0;
-            int idnew = 0;
-            idprec = Integer.parseInt(id);
-
-                                   
-            //envoyer la req au serveur // idprec et tmp
-            //attendre de recevoir le nouvel id de la ligne
-
-            lp.ajouterLigne(idprec, tmp, aSupprimer);
-            aSupprimer++;*/
-
-            int idprec = -1;
             if (id != null) {
                 idprec = Integer.parseInt(id);
             }
@@ -339,7 +323,13 @@ public class Client {
             out.println("ADD:" + idprec + ":" + tmp);
 
         } catch (NumberFormatException e ){
-            System.out.println("Argument n'est pas un nombre \n");
+            if(id.toLowerCase().equals("start")){
+                idprec = -1;
+                System.out.println("entrer contenu de la ligne \n");
+                String tmp = reader.readLine();
+                out.println("ADD:"+ idprec + ":" + tmp);
+            }else 
+                System.out.println("Argument n'est pas un nombre ou start\n");
             return;
         }
     }

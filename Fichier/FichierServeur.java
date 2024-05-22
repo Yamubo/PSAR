@@ -1,7 +1,6 @@
 package Fichier;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FichierServeur extends Fichier {
@@ -14,7 +13,7 @@ public class FichierServeur extends Fichier {
     }
 
     //ajoute un lock à la ligne
-    public boolean addLock(int id, String user){
+    public synchronized boolean addLock(int id, String user){
         for (Ligne li : this.ensemble) {
             if (li.getId() == id) {
                 locks.put( id, user);
@@ -27,7 +26,7 @@ public class FichierServeur extends Fichier {
 
     //modifie la ligne avec un id précis
     //retourne l'etat de réussite de la modification
-    public boolean modifierLigne(int id , String contenu, String user){
+    public synchronized boolean modifierLigne(int id , String contenu, String user){
         for (Ligne li : this.ensemble) {
             if (li.getId() == id) {
 
@@ -49,7 +48,7 @@ public class FichierServeur extends Fichier {
         return false;
     }
 
-    public boolean isUnlock_and_exist(int idligne , String user){
+    public synchronized boolean isUnlock_and_exist(int idligne , String user){
         if(! isIn(idligne)) return false;
         String tmp = locks.get(idligne);
         if(tmp != null && ! tmp.equals(user) ){
@@ -88,10 +87,10 @@ public class FichierServeur extends Fichier {
         } 
         
         int index = this.findIndex(idprec);
-        if( index == -1){
+        if( index == -1 || (index+1) >= ensemble.size()){
             this.ensemble.add(new Ligne(newId, contenu)); // Ajout à la fin de la liste
         }else {
-            this.ensemble.add(index,new Ligne(newId, contenu)); // Ajout à la fin de la liste
+            this.ensemble.add(index+1,new Ligne(newId, contenu)); 
         }
 
         return newId;
@@ -101,7 +100,7 @@ public class FichierServeur extends Fichier {
         return this.id;
     }
 
-    public boolean supprimerLigne(int id , String user){
+    public synchronized boolean supprimerLigne(int id , String user){
         int index = findIndex(id);
         if(index > -1){
 
